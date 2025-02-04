@@ -6,6 +6,7 @@ const connectDB = require("./Config/dbConfig")
 const bodyParser = require('body-parser');
 const app = express();
 const port = process.env.PORT
+const Host = process.env.HOST
 connectDB();
 app.use(cors());
 app.use(bodyParser.json({ limit: '50mb' }));
@@ -21,6 +22,6 @@ const server = http.createServer(app);
 // server.listen(port, '192.168.0.211', () => {
 //   console.log(`Server is running on http://0.0.0.0:${port}`);
 // });
-app.listen(port, () => {
+app.listen(port, Host ,() => {
     console.log(`Server is running on ${port}`)
 });
