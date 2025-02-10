@@ -1,6 +1,9 @@
 const mongoose = require('mongoose');
 
 const projectDetailsSchema = new mongoose.Schema({
+    workOrderNo:String,
+    orderType:String,
+    type:String,
     orginisationName:String,
     projectName: String,
     startDate:{type:Date, default:null},
@@ -8,7 +11,8 @@ const projectDetailsSchema = new mongoose.Schema({
     projectType: [{
         type: mongoose.Schema.Types.ObjectId, 
       }],
-    
+    projectManager:String,
+    noOfauditor:String,
     projectValue:String,
     primaryPersonName:String,
     secondaryPersonName:String,

@@ -2,6 +2,7 @@ const projectdetailsModel = require('../models/projectDetailsModel')
 const deviceListModel = require('../models/deviceslistModel')
 const projectTypeModel = require('../models/projectTypeModel')
 const reportModel = require('../models/reportModel')
+const directrateModel = require('../models/directrateModel')
 
 const mongoose = require("mongoose");
 
@@ -105,7 +106,7 @@ const getdeviceList = async(req,res) =>{
 const ProjectTypeList = async (req,res) => {
     try{
         const projectType = req.body;
-        const existProjectTypeList = await deviceListModel.findOne({ ProjectTypeName:projectType.ProjectTypeName  });
+        const existProjectTypeList = await projectTypeModel.findOne({ ProjectTypeName:projectType.ProjectTypeName  });
         if (existProjectTypeList){
             res.status(400).json({
                 statusCode:400,
@@ -146,6 +147,7 @@ const getProjectTypeList = async(req,res) =>{
         })
     }
 }
+
 const getProjectName = async(req,res) =>{
     try{
         const projectName = await projectdetailsModel.find().select('_id projectName');
@@ -254,6 +256,51 @@ const postReport = async (req, res) => {
     }
 };
 
+const directrate = async (req,res) => {
+    try{
+        const directrate = req.body;
+        const existdirectrate = await directrateModel.findOne({ directrate:directrate.directrate  });
+        if (existdirectrate){
+            res.status(400).json({
+                statusCode:400,
+                message:"Name Of Device already exist "
+            })
+        } else{
+            const newDirectrate = await directrateModel(directrate);
+            await newDirectrate.save();
+            res.status(200).json({
+                statusCode:200,
+                message:"Device has benn Updated",
+                data:newDirectrate
+            })
+        }
+    } catch(error){
+        res.status(400).json({
+            statusCode:400,
+            message:"unable to Update Devices",
+            data: error.message || error
+        })
+    }
+}
+
+const getDirectrateList = async(req,res) =>{
+    try{
+        const directrateList = await directrateModel.find().select('_id directrate');;
+        res.status(200).json({
+            statusCode: 200,
+            message:"",
+            data:directrateList
+        })
+
+    }catch(error){
+        res.status(400).json({
+            statusCode:400,
+            message:"unable to get directrate list",
+            data: error.message || error
+        })
+    }
+}
+
 module.exports = {
     perseonalDetails,
     deviceList,
@@ -262,5 +309,7 @@ module.exports = {
     getProjectTypeList,
     getProjectName,
     getProjectTypeById,
-    postReport
+    postReport,
+    directrate,
+    getDirectrateList
 }
