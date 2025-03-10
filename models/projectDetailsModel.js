@@ -1,11 +1,17 @@
 const mongoose = require('mongoose');
 
 const projectDetailsSchema = new mongoose.Schema({
-    workOrderNo:String,
+    workOrderNo:{
+        type:String,
+        unique:true
+    },
     orderType:String,
     type:String,
     orginisationName:String,
-    projectName: String,
+    projectName:{ 
+        type:String,
+        unique:true,
+    },
     startDate:{type:Date, default:null},
     endDate:{type:Date, default:null},
     projectType: [{

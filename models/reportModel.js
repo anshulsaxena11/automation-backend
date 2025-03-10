@@ -1,12 +1,16 @@
 const mongoose = require('mongoose');
 
 const reportSchema = new mongoose.Schema({
-    projectName:String,
+    projectName:{ 
+        type:String,
+        ref: 'ProjectDetails'
+    },
     projectType:String,
     round:String,
     vulnerabilityName:String,
     sevirty:String,
     description:String,
+    devices:String,
     path:String,
     impact:String,
     vulnerableParameter:String,

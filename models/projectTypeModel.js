@@ -1,7 +1,11 @@
 const mongoose = require('mongoose');
 
 const ProjectTypeSchema = new mongoose.Schema({
- ProjectTypeName:String,
+ ProjectTypeName:{
+    type:String,
+    required:true,
+    unique:true
+  },
  createdAt:{
     type: Date,
     default: Date.now,
