@@ -17,6 +17,7 @@ const WifiModel = require('../models/WiFiModel')
 const ServerHardwareModel = require("../models/serverHardwareModel")
 const VcEquipmentModel = require("../models/vcEquipmentModel")
 const RouterModel = require('../models/routerVulmerabilityModel')
+const RoundModel = require('../models/roundModel')
 
 const mongoose = require("mongoose");
 
@@ -842,7 +843,130 @@ const updateReportById = async (req, res) => {
     }
 };
 
+const getRound = async (req, res) => {
+    try {
+        const { projectName, projectType } = req.query; // Extract query parameters
 
+        if (!projectName || !projectType) {
+            return res.status(400).json({
+                statusCode: 400,
+                message: "Missing projectName or projectType",
+            });
+        }
+
+        const rounds = await reportModel
+            .find({ projectName, projectType })
+            .select("round");
+
+        // Convert rounds to numbers, remove duplicates, and sort in ascending order
+        const roundList = [...new Set(rounds.map(item => Number(item.round)))]
+            .filter(num => !isNaN(num)) // Ensure only valid numbers
+            .sort((a, b) => a - b);
+
+        return res.status(200).json({
+            statusCode: 200,
+            message: "Rounds retrieved successfully",
+            data: roundList,
+        });
+
+    } catch (error) {
+        console.error("Error retrieving rounds:", error);
+        return res.status(500).json({
+            statusCode: 500,
+            message: "Unable to retrieve round details",
+            error: error.message || error,
+        });
+    }
+};
+
+const getFullReport = async (req, res) => {
+    try {
+        const { projectName, projectType, round } = req.query;
+
+        // Fetch full report
+        const fullReport = await reportModel.find({ projectName, projectType, round });
+
+        // Fetch project details
+        const projectDetails = await projectdetailsModel.find({ _id: projectName });
+
+        // Ensure fullReport exists and has proofOfConcept
+        const updatedReports = fullReport.map((report) => {
+            if (Array.isArray(report.proofOfConcept)) {
+                report.proofOfConcept = report.proofOfConcept
+                    .filter((item) => item.description?.trim() || item.proof?.trim())
+                    .map((item) => ({
+                        ...item,
+                        proof: item.proof ? `${req.protocol}://${req.get('host')}${item.proof}` : "",
+                    }));
+            }
+            return report;
+        });
+
+        res.status(200).json({
+            statusCode: 200,
+            message: "Rounds retrieved successfully",
+            data: projectDetails , 
+            response: updatedReports , 
+        });
+
+    } catch (error) {
+        console.error("Error fetching report:", error);
+        res.status(400).json({
+            statusCode: 400,
+            message: "Unable to get full report details",
+            error: error.message || error,
+        });
+    }
+};
+
+const getAllRound = async (req,res) => {
+    try{
+        const rounds = await RoundModel.find().sort({value: 1});
+        res.status(200).json({
+            statuscode:200,
+            data:rounds
+        })
+    } catch(error){
+        console.error("Error fetching round:", error);
+        res.status(400).json({
+            statusCode: 400,
+            message: "Unable to get rounds",
+            error: error.message || error,
+        });
+    }
+}
+
+const addNewRound = async (req,res) => {
+    const { value, label } = req.body;
+    if(!value || !label){
+        res.status(400).json({
+            statuscode:400,
+            message:"Value and Label is required"
+        })
+    }
+    try{
+        const existing = await RoundModel.findOne({value})
+        if(existing){
+            res.status(400).json({
+                statuscode:400, 
+                message:'Round already exist'
+            })
+        }
+        const newRound = new RoundModel({value,label})
+        await newRound.save();
+        res.status(200).json({
+            statuscode:200,
+            message: "Report created successfully",
+            data: newReport,
+        })
+    }catch(err){
+        res.status(400).json({
+            statuscode:400,
+            message: 'Failed to add round', 
+            error: err
+        })
+    }
+}
 
 
 module.exports = {
@@ -863,5 +987,9 @@ module.exports = {
     getVulnerabilityDetails,
     getReportDetailsById,
     updateReportById,
-    getVulnerability
+    getVulnerability,
+    getRound,
+    getFullReport,
+    getAllRound,
+    addNewRound
 }
