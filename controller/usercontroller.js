@@ -937,28 +937,25 @@ const getAllRound = async (req,res) => {
 }
 
 const addNewRound = async (req,res) => {
-    const { value, label } = req.body;
-    if(!value || !label){
-        res.status(400).json({
-            statuscode:400,
-            message:"Value and Label is required"
-        })
-    }
     try{
-        const existing = await RoundModel.findOne({value})
-        if(existing){
-            res.status(400).json({
-                statuscode:400, 
-                message:'Round already exist'
-            })
-        }
-        const newRound = new RoundModel({value,label})
-        await newRound.save();
+        const existingRound = await RoundModel.find({}, 'value') 
+        const usedValues = existingRound.map(round => Number(round.value));
+        let  newValue = 1;
+        while (usedValues.includes(newValue)) {
+            newValue++;
+          }
+
+        const newRound = await RoundModel.create({
+            label: `Round ${newValue}`,
+            value: newValue
+        })
+
         res.status(200).json({
             statuscode:200,
-            message: "Report created successfully",
-            data: newReport,
+            message:'new Round Added',
+            data:newRound
         })
+        
     }catch(err){
         res.status(400).json({
             statuscode:400,
