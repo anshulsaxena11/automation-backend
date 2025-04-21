@@ -20,7 +20,7 @@ app.use('/uploads', express.static(path.join(__dirname, './uploads')));
 
 // .....routes...
 app.use('/api/v1', require('./routes/indexRoutes'));
-const server = http.createServer(app);
+http.createServer(app);
 
 app.listen(port, Host ,() => {
     console.log(`Server is running on ${port}`)
