@@ -18,6 +18,7 @@ const ServerHardwareModel = require("../models/serverHardwareModel")
 const VcEquipmentModel = require("../models/vcEquipmentModel")
 const RouterModel = require('../models/routerVulmerabilityModel')
 const RoundModel = require('../models/roundModel')
+const stpiEmpDetailsModel = require('../models/StpiEmp')
 
 const mongoose = require("mongoose");
 
@@ -301,7 +302,7 @@ const editProjectDetails = async (req, res) => {
         const updateData = req.body;
         const file = req.filePath;
 
-        // Check if project exists
+
         const project = await projectdetailsModel.findById(id)
         if (!project) {
             return res.status(404).json({
@@ -310,7 +311,7 @@ const editProjectDetails = async (req, res) => {
             });
         }
 
-        // Validate workOrderNo uniqueness (excluding current project)
+
         if (updateData.workOrderNo) {
             const existingProject = await projectdetailsModel.findOne({
                 workOrderNo: updateData.workOrderNo,
@@ -965,6 +966,115 @@ const addNewRound = async (req,res) => {
     }
 }
 
+const getStpiEmpListActive = async (req, res) => {
+    try {
+      const { page = 1, limit = 10, search=" ",centre=" " ,etpe=" ", projectId = "", dir=" "} = req.query;
+      let mappedEmployeeIds = [];
+      if (projectId.trim()) {
+        const project = await projectdetailsModel.findById(projectId).select('resourseMapping');
+        if (project) {
+          mappedEmployeeIds = project.resourseMapping.map(id => id.toString());
+        }
+      }
+      const query = {
+        StatusNoida: true,
+        ...(search.trim()
+          ? {
+              $or: [
+                { centre: { $regex: search, $options: "i" } },
+                { etpe: { $regex: search, $options: "i" } },
+                { ename: { $regex: search, $options: "i" } },
+                { empid: { $regex: search, $options: "i" } },
+                { dir: { $regex: search, $options: "i" } },
+              ],
+            }
+          : {}),
+          ...(centre.trim() ? { centre: centre } : {}), 
+          ...(dir.trim() ? { dir: dir } : {}),   
+          ...(etpe.trim() ? { etpe: etpe } : {}),  
+      };
+  
+      const totalCount = await stpiEmpDetailsModel.countDocuments(query);
+      const allData = await stpiEmpDetailsModel.find(query)
+      .sort({ createdAt: -1 }) // initial sort
+      .lean(); 
+
+  
+    const finalData = allData
+      .map(emp => ({
+        ...emp,
+        isChecked: mappedEmployeeIds.includes(emp._id.toString()),
+      }))
+      .sort((a, b) => (b.isChecked === true) - (a.isChecked === true)) // true on top
+      .slice((page - 1) * limit, page * limit); 
+    
+      const finalCheckedData = allData
+        .map(emp => ({
+            ...emp,
+            isChecked: mappedEmployeeIds.includes(emp._id.toString()),
+        }))
+        .filter(emp => emp.isChecked) // only checked ones
+        .slice((page - 1) * limit, page * limit);
+  
+      res.status(200).json({
+        statusCode: 200,
+        success: true,
+        total: totalCount,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(totalCount / limit),
+        data: finalData,
+        response:finalCheckedData
+      });
+    } catch (error) {
+      res.status(400).json({
+        statusCode: 400,
+        message: error.message || "Something went wrong",
+      });
+    }
+  };
+
+  const projectMapping = async(req,res) => {
+    try{
+        const payload = req.body;
+
+        const projectId= payload.projectId;
+        const employeeId = payload.employeeIds;
+
+        const project = await projectdetailsModel.findById({_id:projectId})
+
+        if (!projectId || !Array.isArray(employeeId)) {
+             res.status(400).json({
+              statusCode: 400,
+              message: "Invalid projectId or employeeId",
+            });
+        }
+        const currentMapping = new Set(project.resourseMapping.map(id => id.toString()));
+        const incomingEmpId = new Set(employeeId.map(id => id.toString()));
+
+        employeeId.forEach(id => currentMapping.add(id.toString()));
+
+        project.resourseMapping.forEach(id => {
+            if (!incomingEmpId.has(id.toString())) {
+              currentMapping.delete(id.toString());
+            }
+          });
+
+          project.resourseMapping = Array.from(currentMapping).map(id => new mongoose.Types.ObjectId(id));
+        await project.save();
+        res.status(200).json({
+            statusCode:200,
+            message: 'Resource mapping updated successfully', 
+            data: project.resourseMapping 
+        });
+    } catch(error){
+        res.status(400).json({
+            statuscode:400,
+            message :error,
+        })
+    }
+
+  }
 
 module.exports = {
     perseonalDetails,
@@ -988,5 +1098,7 @@ module.exports = {
     getRound,
     getFullReport,
     getAllRound,
-    addNewRound
+    addNewRound,
+    getStpiEmpListActive,
+    projectMapping
 }

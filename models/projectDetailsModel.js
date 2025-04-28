@@ -17,6 +17,9 @@ const projectDetailsSchema = new mongoose.Schema({
     projectType: [{
         type: mongoose.Schema.Types.ObjectId, 
       }],
+    resourseMapping:[{
+        type: mongoose.Schema.Types.ObjectId, 
+    }],
     projectManager:String,
     noOfauditor:String,
     projectValue:String,

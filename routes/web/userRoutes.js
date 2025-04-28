@@ -9,6 +9,8 @@ routes.post('/directrate',UserCtrl.directrate)
 routes.post('/ProjectTypeList-Post',UserCtrl.ProjectTypeList)
 routes.post('/report',upload.any(),UserCtrl.postReport)
 routes.post('/roundList',UserCtrl.addNewRound)
+routes.post('/project-mapping', UserCtrl.projectMapping);
+routes.put('/report/:id',upload.any(),UserCtrl.updateReportById)
 routes.get('/deviceList',UserCtrl.getdeviceList)
 routes.get('/ProjectTypeList',UserCtrl.getProjectTypeList)
 routes.get('/projectName',UserCtrl.getProjectName)
@@ -20,10 +22,9 @@ routes.put('/projectDetails/:id',upload.single('workOrder'),UserCtrl.editProject
 routes.get('/report',UserCtrl.getReportDetails);
 routes.get('/vulnerability',UserCtrl.getVulnerability);
 routes.get('/report/:id',UserCtrl.getReportDetailsById)
-routes.put('/report/:id',upload.any(),UserCtrl.updateReportById)
 routes.get('/round',UserCtrl.getRound)
 routes.get('/fullreport',UserCtrl.getFullReport)
 routes.get('/roundList',UserCtrl.getAllRound)
-
+routes.get('/stpiEmp',UserCtrl.getStpiEmpListActive)
 
 module.exports = routes 
