@@ -18,7 +18,9 @@ const ServerHardwareModel = require("../models/serverHardwareModel")
 const VcEquipmentModel = require("../models/vcEquipmentModel")
 const RouterModel = require('../models/routerVulmerabilityModel')
 const RoundModel = require('../models/roundModel')
-const stpiEmpDetailsModel = require('../models/StpiEmp')
+const stpiEmpDetailsModel = require('../models/StpiEmpModel')
+const ToolsAndHardwareMasterMdel = require('../models/toolsandHardwareMasterModel')
+const ToolsAndHardwareModel= require("../models/toolsAndHardwareModel") 
 
 const mongoose = require("mongoose");
 
@@ -1076,6 +1078,248 @@ const getStpiEmpListActive = async (req, res) => {
 
   }
 
+  const skillMapping = async(req,res)  => {
+    try{
+        const payload=req.body
+        const mappedSkills = (payload.skills || []).map(([scopeOfWorkId, Rating]) => ({
+            scopeOfWorkId: new mongoose.Types.ObjectId(scopeOfWorkId),
+            Rating: Rating
+          }));
+        await stpiEmpDetailsModel.findByIdAndUpdate(
+            payload._id,
+            { skills: mappedSkills },
+            { new: true }
+        );
+        res.status(200).json({
+            statuscode:200,
+            success:true,
+            message:"Employe kills has been updated"
+        })
+    }catch(error){
+        res.status(400).json({
+            statusCode:400,
+            message:error
+        })
+    }
+  }
+  const postToolsAndHardwareMaster = async(req,res) => {
+    try{
+        const payload=req.body;
+        const toolsAndHardware = await ToolsAndHardwareMasterMdel.findOne({tollsName:payload.tollsName});
+        if(toolsAndHardware){
+            res.status(400).json({
+                statusCode:400,
+                message:"Tools And Hardware already exist"
+            })
+        }else{
+            const newtoolsAndHardware = new ToolsAndHardwareMasterMdel({
+                tollsName:payload.tollsName,
+                toolsAndHardwareType:payload.toolsAndHardwareType
+            })
+            await newtoolsAndHardware.save();
+            res.status(200).json({
+                statusCode:200,
+                message:"Tool and Hardware has been updated",
+            })
+        }
+    }catch(error){
+        res.status(400).json({
+            status:400,
+            message:error
+        })
+    }
+  }
+
+    const getToolsAndHardware = async (req, res) => {
+        try {
+            const { page = 1, limit = 10, search=" ",toolsAndHardwareType=" " } = req.query;
+            const query = {
+            ...(search.trim()
+                ? {
+                    $or: [
+                    { tollsName: { $regex: search, $options: "i" } },
+                    { toolsAndHardwareType: { $regex: search, $options: "i" } },
+                    ],
+                }
+                : {}),
+                ...(toolsAndHardwareType.trim() ? { toolsAndHardwareType: toolsAndHardwareType } : {}),  
+            };
+
+            const totalCount = await ToolsAndHardwareMasterMdel.countDocuments(query);
+            const data = await ToolsAndHardwareMasterMdel.find(query).skip((page - 1) * limit).limit(parseInt(limit)).sort({ createdAt: -1 });
+            
+
+
+            res.status(200).json({
+            statusCode: 200,
+            success: true,
+            total: totalCount,
+            page: parseInt(page),
+            limit: parseInt(limit),
+            totalPages: Math.ceil(totalCount / limit),
+            data: data,
+            });
+        } catch (error) {
+            res.status(400).json({
+            statusCode: 400,
+            message: error.message || "Something went wrong",
+            });
+        }
+    };
+
+    const editToolsAndData = async (req, res) => {
+        try {
+            const { id } = req.params;
+            const updateData = req.body;
+    
+            // Check if document exists
+            const ToolAndHardware = await ToolsAndHardwareMasterMdel.findById(id);
+            if (!ToolAndHardware) {
+                return res.status(404).json({
+                    statusCode: 404,
+                    message: "Tools And Hardware NOT FOUND",
+                });
+            }
+    
+            // If req.body is empty -> treat as GET
+            const isUpdate = Object.keys(updateData).length > 0;
+    
+            let projectDetails;
+            if (isUpdate) {
+                // Perform update
+                projectDetails = await ToolsAndHardwareMasterMdel.findByIdAndUpdate(
+                    id,
+                    { $set: updateData },
+                    { new: true }
+                );
+            } else {
+                // No update data -> just return existing document
+                projectDetails = ToolAndHardware;
+            }
+    
+            res.status(200).json({
+                statusCode: 200,
+                message: isUpdate ? "Project Updated Successfully" : "Project Retrieved Successfully",
+                projectDetails,
+            });
+    
+        } catch (error) {
+            console.error("Error in editToolsAndData:", error);
+            res.status(500).json({
+                statusCode: 500,
+                message: "Internal Server Error",
+                error: error.message || error,
+            });
+        }
+    };
+
+    const postToolsAndHardware = async(req,res) => {
+        try{
+            const payload=req.body;
+            const newtoolsAndHardware = new ToolsAndHardwareModel({
+                tollsName:payload.tollsName,
+                quantity:payload.quantity,
+                startDate:payload.startDate,
+                endDate:payload.endDate,
+                directorates:payload.directorates,
+                purchasedOrder:payload.purchasedOrder,
+                description:payload.description,
+            })
+            await newtoolsAndHardware.save();
+            res.status(200).json({
+                statusCode:200,
+                message:"Tool and Hardware has been updated",
+            })
+        }catch(error){
+            res.status(400).json({
+                status:400,
+                message:error
+            })
+        }
+      }
+
+      const getToolsAndHardwareList = async (req, res) => {
+        try {
+            const { page = 1, limit = 10, search=" ",directorates=" " } = req.query;
+            const query = {
+            ...(search.trim()
+                ? {
+                    $or: [
+                    { tollsName: { $regex: search, $options: "i" } },
+                    { quantity: { $regex: search, $options: "i" } },
+                    { directorates: { $regex: search, $options: "i" } },
+                    ],
+                }
+                : {}),
+                ...(directorates.trim() ? { directorates: directorates } : {}),  
+            };
+
+            const totalCount = await ToolsAndHardwareModel.countDocuments(query);
+            const data = await ToolsAndHardwareModel.find(query).skip((page - 1) * limit).limit(parseInt(limit)).sort({ createdAt: -1 });
+            
+            res.status(200).json({
+            statusCode: 200,
+            success: true,
+            total: totalCount,
+            page: parseInt(page),
+            limit: parseInt(limit),
+            totalPages: Math.ceil(totalCount / limit),
+            data: data,
+            });
+        } catch (error) {
+            res.status(400).json({
+            statusCode: 400,
+            message: error.message || "Something went wrong",
+            });
+        }
+    };
+
+    const editToolsAndHardware = async (req, res) => {
+        try {
+            const { id } = req.params;
+            const updateData = req.body;
+    
+            // Check if document exists
+            const ToolAndHardware = await ToolsAndHardwareModel.findById(id);
+            if (!ToolAndHardware) {
+                return res.status(404).json({
+                    statusCode: 404,
+                    message: "Tools And Hardware NOT FOUND",
+                });
+            }
+    
+            // If req.body is empty -> treat as GET
+            const isUpdate = Object.keys(updateData).length > 0;
+    
+            let projectDetails;
+            if (isUpdate) {
+                // Perform update
+                projectDetails = await ToolsAndHardwareModel.findByIdAndUpdate(
+                    id,
+                    { $set: updateData },
+                    { new: true }
+                );
+            } else {
+                // No update data -> just return existing document
+                projectDetails = ToolAndHardware;
+            }
+    
+            res.status(200).json({
+                statusCode: 200,
+                message: isUpdate ? "Project Updated Successfully" : "Project Retrieved Successfully",
+                projectDetails,
+            });
+    
+        } catch (error) {
+            console.error("Error in editToolsAndData:", error);
+            res.status(500).json({
+                statusCode: 500,
+                message: "Internal Server Error",
+                error: error.message || error,
+            });
+        }
+    };
+
 module.exports = {
     perseonalDetails,
     deviceList,
@@ -1100,5 +1344,12 @@ module.exports = {
     getAllRound,
     addNewRound,
     getStpiEmpListActive,
-    projectMapping
+    projectMapping,
+    skillMapping,
+    postToolsAndHardwareMaster,
+    getToolsAndHardware,
+    editToolsAndData,
+    postToolsAndHardware,
+    getToolsAndHardwareList,
+    editToolsAndHardware,
 }

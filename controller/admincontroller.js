@@ -1,5 +1,5 @@
 const axios = require('axios');
-const stpiEmpDetailsModel = require('../models/StpiEmp')
+const stpiEmpDetailsModel = require('../models/StpiEmpModel')
 
 const sync = async(req,res) =>{
     try{

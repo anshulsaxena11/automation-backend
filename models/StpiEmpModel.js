@@ -21,6 +21,10 @@ const stpiEmp = new mongoose.Schema({
         type:Boolean,
         default:false
     },
+    skills:[{
+        scopeOfWorkId:mongoose.Schema.Types.ObjectId, 
+        Rating:String,               
+    }],
     createdAt:{
         type: Date,
         default: Date.now,
