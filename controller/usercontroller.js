@@ -970,7 +970,7 @@ const addNewRound = async (req,res) => {
 
 const getStpiEmpListActive = async (req, res) => {
     try {
-      const { page = 1, limit = 10, search=" ",centre=" " ,etpe=" ", projectId = "", dir=" "} = req.query;
+      const { page="" , limit="" , search=" ",centre=" " ,etpe=" ", projectId = "", dir=" "} = req.query;
       let mappedEmployeeIds = [];
       if (projectId.trim()) {
         const project = await projectdetailsModel.findById(projectId).select('resourseMapping');
@@ -1017,6 +1017,9 @@ const getStpiEmpListActive = async (req, res) => {
         }))
         .filter(emp => emp.isChecked) // only checked ones
         .slice((page - 1) * limit, page * limit);
+        const fullData = await stpiEmpDetailsModel.find({ StatusNoida: true }) .sort({ createdAt: -1 });
+        const fullDataEdit = await stpiEmpDetailsModel.find({ StatusNoida: true,dir:dir }) .sort({ createdAt: -1 });
+   
   
       res.status(200).json({
         statusCode: 200,
@@ -1026,6 +1029,8 @@ const getStpiEmpListActive = async (req, res) => {
         limit: parseInt(limit),
         totalPages: Math.ceil(totalCount / limit),
         data: finalData,
+        dropData:fullData,
+        dropEdit:fullDataEdit,
         response:finalCheckedData
       });
     } catch (error) {
@@ -1221,6 +1226,7 @@ const getStpiEmpListActive = async (req, res) => {
                 quantity:payload.quantity,
                 startDate:payload.startDate,
                 endDate:payload.endDate,
+                assignedTo:payload.assignedTo,
                 directorates:payload.directorates,
                 purchasedOrder:payload.purchasedOrder,
                 description:payload.description,
