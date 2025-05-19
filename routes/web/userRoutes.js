@@ -33,5 +33,7 @@ routes.put('/toolsandHardwareMaster/:id',UserCtrl.editToolsAndData)
 routes.post('/toolsAndHardware',UserCtrl.postToolsAndHardware)
 routes.get('/toolsAndHardware',UserCtrl.getToolsAndHardwareList)
 routes.put('/toolsAndHardware/:id',UserCtrl.editToolsAndHardware)
+routes.get('/timeline/:id',UserCtrl.timeline)
+routes.put('/timeline/:id',UserCtrl.timelinePhase)
 
 module.exports = routes 

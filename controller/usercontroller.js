@@ -21,6 +21,7 @@ const RoundModel = require('../models/roundModel')
 const stpiEmpDetailsModel = require('../models/StpiEmpModel')
 const ToolsAndHardwareMasterMdel = require('../models/toolsandHardwareMasterModel')
 const ToolsAndHardwareModel= require("../models/toolsAndHardwareModel") 
+const ProjectPhase = require("../models/ProjectPhase")
 
 const mongoose = require("mongoose");
 
@@ -1305,6 +1306,7 @@ const getStpiEmpListActive = async (req, res) => {
                     { $set: updateData },
                     { new: true }
                 );
+                
             } else {
                 // No update data -> just return existing document
                 projectDetails = ToolAndHardware;
@@ -1325,6 +1327,100 @@ const getStpiEmpListActive = async (req, res) => {
             });
         }
     };
+
+   const timeline = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const projectPhase = await ProjectPhase.findOne({ ProjectId: id });
+
+        const project = await projectdetailsModel.findById(id).populate({
+            path: 'projectType',
+            select: 'ProjectTypeName'
+        });
+
+        if (!project) {
+            return res.status(404).json({
+                statusCode: 404,
+                success: false,
+                message: 'Project not found',
+            });
+        }
+        const employeeIds = project.resourseMapping;
+        const employeeDetails = await stpiEmpDetailsModel.find({
+            _id: { $in: employeeIds }
+        }).select('empid ename centre dir edesg'); 
+
+        res.status(200).json({
+            statusCode: 200,
+            success: true,
+            data: {
+                ...project._doc,
+                resourseMapping: employeeDetails, 
+                projectPhase:projectPhase
+            },
+        });
+
+        } catch (error) {
+            console.error('Timeline error:', error);
+            res.status(500).json({
+            statusCode: 500,
+            success: false,
+            message: 'Server error',
+            error: error.message || error,
+            });
+        }
+    };
+
+const timelinePhase = async (req, res) => {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    try {
+        if (!updateData.phase || !Array.isArray(updateData.phase)) {
+            return res.status(400).json({
+                statuscode: 400,
+                message: "Phase data must be a valid array.",
+            });
+        }
+
+        let projectPhase = await ProjectPhase.findOne({ ProjectId: id });
+
+        if (!projectPhase) {
+            // Create new document
+            const newProjectPhase = new ProjectPhase({
+                ProjectId: id,
+                phase: updateData.phase,
+            });
+
+            await newProjectPhase.save();
+
+            return res.status(201).json({
+                statuscode: 201,
+                message: "Phase data created successfully",
+                data: newProjectPhase,
+            });
+        } else {
+            // ✅ Replace the entire phase array with the new one (e.g., just Phase 1)
+            projectPhase.phase = updateData.phase;
+
+            await projectPhase.save();
+
+            return res.status(200).json({
+                statuscode: 200,
+                message: "Phase data updated successfully",
+                data: projectPhase,
+            });
+        }
+    } catch (error) {
+        console.error("Error in timelinePhase API:", error);
+        return res.status(500).json({
+            statuscode: 500,
+            message: "Internal Server Error",
+            error: error.message,
+        });
+    }
+}
+
 
 module.exports = {
     perseonalDetails,
@@ -1358,4 +1454,6 @@ module.exports = {
     postToolsAndHardware,
     getToolsAndHardwareList,
     editToolsAndHardware,
+    timeline,
+    timelinePhase
 }
