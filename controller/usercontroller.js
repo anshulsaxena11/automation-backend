@@ -1394,8 +1394,8 @@ const timelinePhase = async (req, res) => {
 
             await newProjectPhase.save();
 
-            return res.status(201).json({
-                statuscode: 201,
+            return res.status(200).json({
+                statuscode: 200,
                 message: "Phase data created successfully",
                 data: newProjectPhase,
             });
