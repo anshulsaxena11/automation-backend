@@ -22,6 +22,7 @@ const stpiEmpDetailsModel = require('../models/StpiEmpModel')
 const ToolsAndHardwareMasterMdel = require('../models/toolsandHardwareMasterModel')
 const ToolsAndHardwareModel= require("../models/toolsAndHardwareModel") 
 const ProjectPhase = require("../models/ProjectPhase")
+const TypeOfWorkModel = require("../models/typeOfWorkModel")
 
 const mongoose = require("mongoose");
 
@@ -180,7 +181,9 @@ const ProjectTypeList = async (req,res) => {
 //gettng list for ScopeofWork
 const getProjectTypeList = async(req,res) =>{
     try{
-        const projecttypeList = await projectTypeModel.find().select('_id ProjectTypeName');;
+        const {category} = req.query
+
+        const projecttypeList = await projectTypeModel.find({category:category}).select('_id ProjectTypeName');;
         res.status(200).json({
             statusCode: 200,
             message:"",
@@ -535,7 +538,7 @@ const directrate = async (req,res) => {
 // get Directorate List
 const getDirectrateList = async(req,res) =>{
     try{
-        const directrateList = await directrateModel.find().select('_id directrate');;
+        const directrateList = await directrateModel.find().select('_id directrate');
         res.status(200).json({
             statusCode: 200,
             message:"",
@@ -1421,6 +1424,23 @@ const timelinePhase = async (req, res) => {
     }
 }
 
+const getTypeOfWork = async(req,res)=>{
+    try{
+        const typeOfWork= await TypeOfWorkModel.find();
+
+        res.status(200).json({
+            statusCode:200,
+            data:typeOfWork,
+            message:'Type Of Work has been Fetched'
+        })
+        
+    } catch(error){
+        res.status(400).json({
+            statusCode:400,
+            message:error
+        })
+    }
+}
 
 module.exports = {
     perseonalDetails,
@@ -1455,5 +1475,6 @@ module.exports = {
     getToolsAndHardwareList,
     editToolsAndHardware,
     timeline,
-    timelinePhase
+    timelinePhase,
+    getTypeOfWork
 }

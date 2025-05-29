@@ -35,5 +35,6 @@ routes.get('/toolsAndHardware',UserCtrl.getToolsAndHardwareList)
 routes.put('/toolsAndHardware/:id',UserCtrl.editToolsAndHardware)
 routes.get('/timeline/:id',UserCtrl.timeline)
 routes.put('/timeline/:id',UserCtrl.timelinePhase)
+routes.get('/Type-Of-Work',UserCtrl.getTypeOfWork)
 
 module.exports = routes 
