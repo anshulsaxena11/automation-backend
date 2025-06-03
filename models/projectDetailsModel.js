@@ -30,6 +30,7 @@ const projectDetailsSchema = new mongoose.Schema({
     primaryPersonEmail:String,
     secondaryPersonEmail:String,
     directrate:String,
+    typeOfWork:String,
     serviceLocation:String,
     workOrder:String,
     createdAt:{
