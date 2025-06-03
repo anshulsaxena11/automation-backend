@@ -22,6 +22,7 @@ const stpiEmpDetailsModel = require('../models/StpiEmpModel')
 const ToolsAndHardwareMasterMdel = require('../models/toolsandHardwareMasterModel')
 const ToolsAndHardwareModel= require("../models/toolsAndHardwareModel") 
 const ProjectPhase = require("../models/ProjectPhase")
+const TypeOfWorkModel = require("../models/typeOfWorkModel")
 
 const mongoose = require("mongoose");
 
