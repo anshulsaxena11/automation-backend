@@ -6,6 +6,12 @@ const ProjectPhaseSchema = new mongoose.Schema({
         required:true,
         unique:true
     },
+    amountBuild:{
+        type:String,
+    },
+    amountRecived:{
+        type:String,
+    },
     phase:[{
         noOfPhases:{
             type:String,
