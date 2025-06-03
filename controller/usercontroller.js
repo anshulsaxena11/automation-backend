@@ -22,7 +22,6 @@ const stpiEmpDetailsModel = require('../models/StpiEmpModel')
 const ToolsAndHardwareMasterMdel = require('../models/toolsandHardwareMasterModel')
 const ToolsAndHardwareModel= require("../models/toolsAndHardwareModel") 
 const ProjectPhase = require("../models/ProjectPhase")
-const TypeOfWorkModel = require("../models/typeOfWorkModel")
 
 const mongoose = require("mongoose");
 
@@ -466,16 +465,32 @@ const postReport = async (req, res) => {
             });
         }
 
-        let proofFiles = {};
-        if (req.files) {
-            req.files.forEach((file) => {
-                const match = file.fieldname.match(/\[(\d+)\]/); // Extract index from proof[0], proof[1]
-                if (match) {
-                    const index = match[1]; // Get index from match
-                    proofFiles[index] = `/uploads/image/${file.filename}`;
-                }
-            });
+        let proofFiles = [];
+
+if (req.files && Array.isArray(req.files)) {
+    await Promise.all(req.files.map(async (file) => {
+        const match = file.fieldname.match(/\[(\d+)\]/); // Extract index from proof[0], proof[1]
+        if (match) {
+            const index = parseInt(match[1], 10); // Ensure index is a number
+
+            // Define paths
+            const inputPath = path.join(__dirname, '../uploads/image', file.filename); // Full path to original image
+            const outputFilename = `resized-${file.filename}`;
+            const outputDir = path.join(__dirname, '../uploads/image'); // One step back into /uploads/image/
+            const outputPath = path.join(outputDir, outputFilename);    // Full output file path
+            const outputUrl = `/uploads/image/${outputFilename}`;
+
+            // Resize and compress
+            await sharp(inputPath)
+                .resize(1000, 600)
+                .jpeg({ quality: 70 })
+                .toFile(outputPath);
+
+            // Save result
+            proofFiles[index] = outputUrl;
         }
+    }));
+}
 
         parsedProofOfConcept = parsedProofOfConcept.map((step, index) => ({
             noOfSteps: step.noOfSteps,
