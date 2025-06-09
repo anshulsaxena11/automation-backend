@@ -36,5 +36,6 @@ routes.put('/toolsAndHardware/:id',UserCtrl.editToolsAndHardware)
 routes.get('/timeline/:id',UserCtrl.timeline)
 routes.put('/timeline/:id',UserCtrl.timelinePhase)
 routes.get('/Type-Of-Work',UserCtrl.getTypeOfWork)
+routes.get('/VulnerabilityListSpecific',UserCtrl.getVulnabilityListSpecific)
 
 module.exports = routes 

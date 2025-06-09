@@ -443,7 +443,19 @@ const postReport = async (req, res) => {
         const { proofOfConcept, ...ReportDetails } = req.body;
         let parsedProofOfConcept = [];
 
-        // Parse proofOfConcept JSON if it exists
+        if(ReportDetails){
+            const ProjectName = await reportModel.find({projectName:ReportDetails.projectName,round:ReportDetails.round,devices:ReportDetails.devices,ipAddress:ReportDetails.ipAddress,Name:ReportDetails.Name })
+            const alreadyExists = ProjectName.some(
+                report => report.vulnerabilityName === ReportDetails.vulnerabilityName
+            );
+            if (alreadyExists){
+               return res.status(400).json({
+                statusCode:400,
+                message: "This vulnerability already exists" 
+            });
+            }
+        }
+
         if (proofOfConcept) {
             try {
                 parsedProofOfConcept = typeof proofOfConcept === "string" 
@@ -514,7 +526,6 @@ if (req.files && Array.isArray(req.files)) {
         });
 
     } catch (error) {
-        console.error("Error saving report:", error); // Debugging log
 
         return res.status(500).json({
             statusCode: 500,
@@ -1458,6 +1469,37 @@ const getTypeOfWork = async(req,res)=>{
     }
 }
 
+const getVulnabilityListSpecific = async(req,res) =>{
+    try{
+         const {projectName, projectType,round,devices,Name,ipAddress,} = req.query;
+
+          const filter = {};
+            if (projectName) filter.projectName = projectName;
+            if (projectType) filter.projectType = projectType;
+            if (round) filter.round = round;
+            if (devices) filter.devices = devices;
+            if (Name) filter.Name = Name;
+            if (ipAddress) filter.ipAddress = ipAddress;
+        
+        const vulList = await reportModel
+        .find(filter)
+        .select('vulnerabilityName');
+
+        res.status(200).json({
+            statusCode:200,
+            data:vulList,
+            message:"Data has been fetched Succesful"
+        })
+    } catch(error){
+        res.status(400).json({
+            statusCode:400,
+            data:error,
+            message:"Data has not been fetched Succesful"
+        })
+    }
+
+}
+
 module.exports = {
     perseonalDetails,
     deviceList,
@@ -1492,5 +1534,6 @@ module.exports = {
     editToolsAndHardware,
     timeline,
     timelinePhase,
-    getTypeOfWork
+    getTypeOfWork,
+    getVulnabilityListSpecific
 }
