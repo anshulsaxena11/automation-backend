@@ -12,6 +12,9 @@ const ProjectPhaseSchema = new mongoose.Schema({
     amountRecived:{
         type:String,
     },
+    amountStatus:{
+        type:String,
+    },
     phase:[{
         noOfPhases:{
             type:String,

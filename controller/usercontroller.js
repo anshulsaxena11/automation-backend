@@ -23,6 +23,7 @@ const ToolsAndHardwareMasterMdel = require('../models/toolsandHardwareMasterMode
 const ToolsAndHardwareModel= require("../models/toolsAndHardwareModel") 
 const ProjectPhase = require("../models/ProjectPhase")
 const TypeOfWorkModel = require("../models/typeOfWorkModel")
+const TenderTrackingModel = require("../models/tenderTrackingModel")
 
 const mongoose = require("mongoose");
 
@@ -182,13 +183,23 @@ const ProjectTypeList = async (req,res) => {
 const getProjectTypeList = async(req,res) =>{
     try{
         const {category} = req.query
+        if (!category){
+             const projecttypeList = await projectTypeModel.find().select('_id ProjectTypeName');;
+            res.status(200).json({
+                statusCode: 200,
+                message:"",
+                data:projecttypeList
+            })
+        }
+        else{
+            const projecttypeList = await projectTypeModel.find({category:category}).select('_id ProjectTypeName');;
+            res.status(200).json({
+                statusCode: 200,
+                message:"",
+                data:projecttypeList
+            })
+        }
 
-        const projecttypeList = await projectTypeModel.find({category:category}).select('_id ProjectTypeName');;
-        res.status(200).json({
-            statusCode: 200,
-            message:"",
-            data:projecttypeList
-        })
 
     }catch(error){
         res.status(400).json({
@@ -1419,6 +1430,9 @@ const timelinePhase = async (req, res) => {
             // Create new document
             const newProjectPhase = new ProjectPhase({
                 ProjectId: id,
+                amountBuild:amountBuild,
+                amountRecived:amountRecived,
+                amountStatus:amountStatus,
                 phase: updateData.phase,
             });
 
@@ -1430,7 +1444,9 @@ const timelinePhase = async (req, res) => {
                 data: newProjectPhase,
             });
         } else {
-            // ✅ Replace the entire phase array with the new one (e.g., just Phase 1)
+            projectPhase.amountBuild=updateData.amountBuild
+            projectPhase.amountRecived=updateData.amountBuild
+            projectPhase.amountStatus=updateData.amountStatus
             projectPhase.phase = updateData.phase;
 
             await projectPhase.save();
@@ -1500,6 +1516,99 @@ const getVulnabilityListSpecific = async(req,res) =>{
 
 }
 
+//Tender Detail
+const TenderTrackingDetails = async (req, res) => {
+    console.log(req.body)
+    try {
+        const tenderDetail = req.body;
+        if(!tenderDetail){
+            res.status(400).json({
+                statusCode:400,
+                message :"please enter the require field",
+            })
+        }
+        const file = req.tenderDocument;    
+    
+        if (file) {
+            const fileExtension = file.mimetype.split('/')[1];
+            if (!['jpeg', 'png', 'jpg', 'pdf', 'docx'].includes(fileExtension)) {
+                return res.status(400).json({
+                    statusCode: 400,
+                    message: "Invalid file type. Only imag or doc or PDF files are allowed.",
+                });
+            }
+
+            let fileFolder = 'uploads/tender'; 
+            if (file.mimetype.startsWith('tender/')) {
+                fileFolder = 'uploads/tender';
+            } else if (file.mimetype === 'application/pdf') {
+                fileFolder = 'uploads/tender'; 
+            }
+
+            tenderDetail.tenderDocument = /${fileFolder}/${file.filename};
+        }
+
+        const newTenderDetails = new TenderTrackingModel(tenderDetail);
+        await newTenderDetails.save();
+
+        res.status(200).json({
+            statusCode: 200,
+            message: "Tender Created Successfully",
+            tenderDetails: newTenderDetails,
+        });
+
+    } catch (error) {
+        console.error("Error saving project:", error);
+        res.status(400).json({
+            statusCode: 400,
+            message: "Unable to save Data",
+            data: error.message || error,
+        });
+    }
+};
+
+// getting projrct List API
+const getTenderDetails = async (req, res) => {
+    try {
+      const { page = 1, limit = 10, search = "" } = req.query;
+      const query = search
+        ? {
+            $or: [
+              { workOrderNo: { $regex: search, $options: "i" } },
+              { projectName: { $regex: search, $options: "i" } },  // Example for searching by projectName
+            ]
+          }
+        : {};
+      const totalCount = await TenderTrackingModel.countDocuments(query);
+      const projects = await TenderTrackingModel.find(query)
+        .populate({
+          path: "tenderName",
+          model: "status",
+          select: "valueINR", 
+        })
+        .skip((page - 1) * limit)
+        .limit(parseInt(limit))
+        .sort({ createdAt: -1 });
+
+      res.status(200).json({
+        statuscode: 200,
+        success: true,
+        total: totalCount,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(totalCount / limit),
+        data: projects,
+      });
+    } catch (error) {
+      res.status(400).json({
+        statusCode: 400,
+        success: false,
+        message: "Server Error",
+        error,
+      });
+    }
+  };
+
 module.exports = {
     perseonalDetails,
     deviceList,
@@ -1535,5 +1644,7 @@ module.exports = {
     timeline,
     timelinePhase,
     getTypeOfWork,
-    getVulnabilityListSpecific
+    getVulnabilityListSpecific,
+    getTenderDetails,
+    TenderTrackingDetails
 }
