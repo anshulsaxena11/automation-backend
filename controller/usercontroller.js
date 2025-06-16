@@ -24,6 +24,7 @@ const ToolsAndHardwareModel= require("../models/toolsAndHardwareModel")
 const ProjectPhase = require("../models/ProjectPhase")
 const TypeOfWorkModel = require("../models/typeOfWorkModel")
 const TenderTrackingModel = require("../models/tenderTrackingModel")
+const StateModel = require('../models/stateModel');
 
 const mongoose = require("mongoose");
 
@@ -686,7 +687,7 @@ const getReportDetails = async (req, res) => {
   };
   //webVulnability
   const getVulnerability = async (req, res) => {
-    const { page = 1, limit = 10, search = "", ProjectType } = req.query;
+    const { page, limit , search = "", ProjectType } = req.query;
     let query = {};
 
     if (search) {
@@ -1518,7 +1519,6 @@ const getVulnabilityListSpecific = async(req,res) =>{
 
 //Tender Detail
 const TenderTrackingDetails = async (req, res) => {
-    console.log(req.body)
     try {
         const tenderDetail = req.body;
         if(!tenderDetail){
@@ -1545,7 +1545,7 @@ const TenderTrackingDetails = async (req, res) => {
                 fileFolder = 'uploads/tender'; 
             }
 
-            tenderDetail.tenderDocument = /${fileFolder}/${file.filename};
+            tenderDetail.tenderDocument = '/${fileFolder}/${file.filename}';
         }
 
         const newTenderDetails = new TenderTrackingModel(tenderDetail);
@@ -1574,18 +1574,14 @@ const getTenderDetails = async (req, res) => {
       const query = search
         ? {
             $or: [
-              { workOrderNo: { $regex: search, $options: "i" } },
-              { projectName: { $regex: search, $options: "i" } },  // Example for searching by projectName
+                { tenderName: { $regex: search, $options: "i" } },
+                { organizationName: { $regex: search, $options: "i" } },
+                { taskForce: { $regex: search, $options: "i" } },  // Example for searching by projectName
             ]
           }
         : {};
       const totalCount = await TenderTrackingModel.countDocuments(query);
       const projects = await TenderTrackingModel.find(query)
-        .populate({
-          path: "tenderName",
-          model: "status",
-          select: "valueINR", 
-        })
         .skip((page - 1) * limit)
         .limit(parseInt(limit))
         .sort({ createdAt: -1 });
@@ -1605,9 +1601,77 @@ const getTenderDetails = async (req, res) => {
         success: false,
         message: "Server Error",
         error,
-      });
-    }
-  };
+    });
+    }
+};
+
+const getState = async(req,res)=>{
+    try{
+        const stateList = await StateModel.find()
+        res.status(200).json({
+            statusCode:200,
+            data:stateList,
+            message:'Data Has Been Fetched Succesfully'
+        })
+
+    }catch(error){
+        res.status(400).json({
+            statusCode:400,
+            message:error
+        })
+    }
+}
+
+const getEmpListTaskForce = async(req,res)=>{
+    try{
+        const empList= await stpiEmpDetailsModel.find({taskForceMember:"Yes"})
+        res.status(200).json({
+            statusCode:200,
+            data:empList,
+            messsage:"Data Has Been Fetched"
+        })
+    }catch(error){
+        res.status(400).json({
+            statusCode:400,
+            message:error
+        })
+    }
+}
+
+const getTenderById = async(req,res)=>{
+    try{
+        const { id } = req.params;
+        const TrackingData = await TenderTrackingModel.findById({_id:id})
+
+        if (!TrackingData){
+            return res.status(400).json({
+                statusCode:400,
+                message:"Tracking data doesnot exist"
+            })
+        }
+
+        res.status(200).json({
+            statusCode:200,
+            data:TrackingData,
+            message:"Data fetched"
+        })
+    }catch(error){
+        res.status(400).json({
+            statusCode:200,
+            message:error
+        })
+    }
+}
+
+const updateTenderById = async(req,res)=>{
+    try{
+        const { id } = req.params;
+        const updateData = req.body;
+    }catch(error){
+
+    }
+}
+
 
 module.exports = {
     perseonalDetails,
@@ -1646,5 +1710,9 @@ module.exports = {
     getTypeOfWork,
     getVulnabilityListSpecific,
     getTenderDetails,
-    TenderTrackingDetails
+    TenderTrackingDetails,
+    getState,
+    getEmpListTaskForce,
+    updateTenderById,
+    getTenderById
 }

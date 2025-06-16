@@ -114,9 +114,7 @@ const getStpiEmpList = async (req, res) => {
 
     const totalCount = await stpiEmpDetailsModel.countDocuments(query);
     const data = await stpiEmpDetailsModel.find(query).skip((page - 1) * limit).limit(parseInt(limit)).sort({ createdAt: -1 });
-     
-
-
+    
     res.status(200).json({
       statusCode: 200,
       success: true,
@@ -226,6 +224,35 @@ const stpiEmpType = async(req,res) => {
   }
 
 }
+
+const taskForceMemberStatus = async(req,res)=>{
+  try{
+    const payload = req.body
+    const findEmp = await stpiEmpDetailsModel.findById({_id:payload.id})
+
+    if(!findEmp){
+      return res.status(404).json({ message: "Employee not found" });
+    }
+
+    const newStatus = findEmp.taskForceMember ==="No" ?"Yes":"No";
+
+    findEmp.taskForceMember = newStatus
+
+    await findEmp.save();
+
+    res.status(200).json({
+      statusCode:200,
+      message:"Employee has been mapped"
+    })
+
+  }catch(error){
+    res.status(400).json({
+      statusCode:400,
+      message:error
+    })
+
+  }
+}
 module.exports = {
   sync,
   getStpiEmpList,
@@ -233,4 +260,5 @@ module.exports = {
   stpiCentre,
   stpiEmpType,
   stpidir,
+  taskForceMemberStatus
 }

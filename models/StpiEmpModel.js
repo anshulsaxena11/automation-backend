@@ -25,6 +25,10 @@ const stpiEmp = new mongoose.Schema({
         scopeOfWorkId:mongoose.Schema.Types.ObjectId, 
         Rating:String,               
     }],
+    taskForceMember:{
+      type:String,
+      default:"No",
+    },
     createdAt:{
         type: Date,
         default: Date.now,
