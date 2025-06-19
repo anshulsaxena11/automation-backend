@@ -37,11 +37,11 @@ routes.get('/timeline/:id',UserCtrl.timeline)
 routes.put('/timeline/:id',UserCtrl.timelinePhase)
 routes.get('/Type-Of-Work',UserCtrl.getTypeOfWork)
 routes.get('/VulnerabilityListSpecific',UserCtrl.getVulnabilityListSpecific)
-routes.post('/TenderTrackingDetails',upload.any(),UserCtrl.TenderTrackingDetails)
+routes.post('/TenderTrackingDetails',upload.single('file'),UserCtrl.TenderTrackingDetails)
 routes.get('/Tender',UserCtrl.getTenderDetails)
 routes.get('/state',UserCtrl.getState)
 routes.get('/EmpListTF',UserCtrl.getEmpListTaskForce)
 routes.get('/tenderTracking/:id',UserCtrl.getTenderById)
-routes.put('/tenderTracking/:id',UserCtrl.updateTenderById)
+routes.put('/tenderTracking/:id',upload.single('tenderDocument'),UserCtrl.updateTenderById)
 
 module.exports = routes 

@@ -25,6 +25,8 @@ const ProjectPhase = require("../models/ProjectPhase")
 const TypeOfWorkModel = require("../models/typeOfWorkModel")
 const TenderTrackingModel = require("../models/tenderTrackingModel")
 const StateModel = require('../models/stateModel');
+const path = require('path');
+const sharp = require('sharp');
 
 const mongoose = require("mongoose");
 
@@ -1519,52 +1521,56 @@ const getVulnabilityListSpecific = async(req,res) =>{
 
 //Tender Detail
 const TenderTrackingDetails = async (req, res) => {
-    try {
-        const tenderDetail = req.body;
-        if(!tenderDetail){
-            res.status(400).json({
-                statusCode:400,
-                message :"please enter the require field",
-            })
-        }
-        const file = req.tenderDocument;    
-    
-        if (file) {
-            const fileExtension = file.mimetype.split('/')[1];
-            if (!['jpeg', 'png', 'jpg', 'pdf', 'docx'].includes(fileExtension)) {
-                return res.status(400).json({
-                    statusCode: 400,
-                    message: "Invalid file type. Only imag or doc or PDF files are allowed.",
-                });
-            }
+  try {
+    const tenderDetail = req.body;
+    const file = req.file;
 
-            let fileFolder = 'uploads/tender'; 
-            if (file.mimetype.startsWith('tender/')) {
-                fileFolder = 'uploads/tender';
-            } else if (file.mimetype === 'application/pdf') {
-                fileFolder = 'uploads/tender'; 
-            }
-
-            tenderDetail.tenderDocument = '/${fileFolder}/${file.filename}';
-        }
-
-        const newTenderDetails = new TenderTrackingModel(tenderDetail);
-        await newTenderDetails.save();
-
-        res.status(200).json({
-            statusCode: 200,
-            message: "Tender Created Successfully",
-            tenderDetails: newTenderDetails,
-        });
-
-    } catch (error) {
-        console.error("Error saving project:", error);
-        res.status(400).json({
-            statusCode: 400,
-            message: "Unable to save Data",
-            data: error.message || error,
-        });
+    if (!tenderDetail || Object.keys(tenderDetail).length === 0) {
+      return res.status(400).json({
+        statusCode: 400,
+        message: "Please enter the required fields",
+      });
     }
+
+    // Handle file upload
+    if (file) {
+      const fileExtension = file.mimetype.split("/")[1];
+
+      // Validate file type
+      const allowedExtensions = ["jpeg", "png", "jpg", "pdf", "doc", "docx"];
+      if (!allowedExtensions.includes(fileExtension)) {
+        return res.status(400).json({
+          statusCode: 400,
+          message: "Invalid file type. Only image, doc, or PDF files are allowed.",
+        });
+      }
+
+      const filePath =
+        req.filesPath && req.filesPath[file.fieldname]
+          ? req.filesPath[file.fieldname][0]
+          : `/uploads/tender/${file.filename}`; 
+
+
+      tenderDetail.tenderDocument = filePath;
+    }
+
+    const newTenderDetails = new TenderTrackingModel(tenderDetail);
+    await newTenderDetails.save();
+
+    return res.status(200).json({
+      statusCode: 200,
+      message: "Tender Created Successfully",
+      tenderDetails: newTenderDetails,
+    });
+
+  } catch (error) {
+    console.error("Error saving tender details:", error);
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Unable to save data",
+      error: error.message || error,
+    });
+  }
 };
 
 // getting projrct List API
@@ -1638,39 +1644,85 @@ const getEmpListTaskForce = async(req,res)=>{
     }
 }
 
-const getTenderById = async(req,res)=>{
-    try{
-        const { id } = req.params;
-        const TrackingData = await TenderTrackingModel.findById({_id:id})
+const getTenderById = async (req, res) => {
+  try {
+    const { id } = req.params;
 
-        if (!TrackingData){
-            return res.status(400).json({
-                statusCode:400,
-                message:"Tracking data doesnot exist"
-            })
-        }
+    // Find tender by ID
+    const tenderData = await TenderTrackingModel.findById(id);
 
-        res.status(200).json({
-            statusCode:200,
-            data:TrackingData,
-            message:"Data fetched"
-        })
-    }catch(error){
-        res.status(400).json({
-            statusCode:200,
-            message:error
-        })
+    if (!tenderData) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Tender data does not exist",
+      });
     }
-}
 
-const updateTenderById = async(req,res)=>{
-    try{
-        const { id } = req.params;
-        const updateData = req.body;
-    }catch(error){
+    // Prepend full URL for tenderDocument if exists
+    const filePath = tenderData.tenderDocument
+      ? `${req.protocol}://${req.get("host")}${tenderData.tenderDocument}`
+      : null;
 
+    const responseData = {
+      ...tenderData._doc,
+      tenderDocument: filePath, // update path with full URL
+    };
+
+    return res.status(200).json({
+      statusCode: 200,
+      message: "Data fetched successfully",
+      data: responseData,
+    });
+
+  } catch (error) {
+    console.error("Error fetching tender by ID:", error);
+    return res.status(500).json({
+      statusCode: 500,
+      message: "Error fetching tender data",
+      error: error.message || error,
+    });
+  }
+};
+
+
+const updateTenderById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    const file = req.filesPath?.tenderDocument?.[0]; 
+
+    const tender = await TenderTrackingModel.findById(id);
+    if (!tender) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: "Tender not found",
+      });
     }
-}
+
+    if (file) {
+      updateData.tenderDocument = file;
+    } else {
+      updateData.tenderDocument = tender.tenderDocument;
+    }
+
+    const updatedTender = await TenderTrackingModel.findByIdAndUpdate(id, updateData, {
+      new: true,
+    });
+
+    res.status(200).json({
+      statusCode: 200,
+      message: "Tender Updated Successfully",
+      tenderDetails: updatedTender,
+    });
+  } catch (error) {
+    console.error("Error updating tender:", error);
+    res.status(500).json({
+      statusCode: 500,
+      message: "Internal Server Error",
+      error: error.message || error,
+    });
+  }
+};
 
 
 module.exports = {
