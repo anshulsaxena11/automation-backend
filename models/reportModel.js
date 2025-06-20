@@ -23,6 +23,10 @@ const reportSchema = new mongoose.Schema({
         proof:String,
     }], 
     recomendation:String,
+    isDeleted:{
+        type:Boolean,
+        default:false,
+    },
     createdAt:{
         type: Date,
         default: Date.now,

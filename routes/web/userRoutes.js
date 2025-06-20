@@ -43,5 +43,6 @@ routes.get('/state',UserCtrl.getState)
 routes.get('/EmpListTF',UserCtrl.getEmpListTaskForce)
 routes.get('/tenderTracking/:id',UserCtrl.getTenderById)
 routes.put('/tenderTracking/:id',upload.single('tenderDocument'),UserCtrl.updateTenderById)
+routes.put('/reportDeleted/:id',UserCtrl.deleteTrue)
 
 module.exports = routes 
