@@ -598,52 +598,67 @@ const getDirectrateList = async(req,res) =>{
 // get Report List
 
 const getReportDetails = async (req, res) => {
-    try {
-      const { page = 1, limit = 10, search = "" } = req.query;
-      const query = search
-        ? {
-            $or: [
-              { workOrderNo: { $regex: search, $options: "i" } },
-              { projectName: { $regex: search, $options: "i" } },  // Example for searching by projectName
-            ]
-          }
-        : {};
-      const totalCount = await reportModel.countDocuments(query);
-      const report = await reportModel.find(query)
-        .populate({
-          path: "projectName",
-          model: "ProjectDetails",
-          select: "projectName -_id", 
-        })
-        .lean()
-        .skip((page - 1) * limit)
-        .limit(parseInt(limit))
-        .sort({ createdAt: -1 });
+  try {
+    const { page = 1, limit = 10, search = "", round = "", devices = "", projectType = "", projectName = "" } = req.query;
 
-        report.forEach(item => {
-            if (item.projectName && item.projectName.projectName) {
-              item.projectName = item.projectName.projectName; // Set projectName to the value
-            }
-          });
+    const query = {
+      isDeleted: { $ne: true }, 
+      ...(round.trim() ? { round } : {}),
+      ...(devices.trim() ? { devices } : {}),
+      ...(projectType.trim() ? { projectType } : {}),
+      ...(projectName.trim() ? { projectName } : {}),
+    };
 
-      res.status(200).json({
-        statuscode: 200,
-        success: true,
-        total: totalCount,
-        page: parseInt(page),
-        limit: parseInt(limit),
-        totalPages: Math.ceil(totalCount / limit),
-        data: report,
-      });
-    } catch (error) {
-      res.status(400).json({
-        statusCode: 400,
-        success: false,
-        message: "Server Error",
-        error,
-      });
+    let report = await reportModel.find(query)
+      .populate({
+        path: "projectName",
+        model: "ProjectDetails",
+        select: "projectName -_id",
+      })
+      .lean()
+      .sort({ createdAt: -1 });
+
+    report.forEach(item => {
+      if (item.projectName && item.projectName.projectName) {
+        item.projectName = item.projectName.projectName;
+      }
+    });
+
+    if (search.trim()) {
+      const regex = new RegExp(search, "i");
+      report = report.filter(item =>
+        regex.test(item.round) ||
+        regex.test(item.devices) ||
+        regex.test(item.projectType) ||
+        regex.test(item.projectName) ||
+        regex.test(item.Name) ||
+        regex.test(item.ipAddress) 
+      );
     }
-  };
+
+    const totalCount = report.length;
+
+    const paginatedReport = report.slice((page - 1) * limit, page * limit);
+
+    res.status(200).json({
+      statuscode: 200,
+      success: true,
+      total: totalCount,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      totalPages: Math.ceil(totalCount / limit),
+      data: paginatedReport,
+    });
+  } catch (error) {
+    res.status(400).json({
+      statusCode: 400,
+      success: false,
+      message: "Server Error",
+      error,
+    });
+  }
+};
+
  // get details of vulnerability
  const getVulnerabilityDetails = async (req, res) => {
     try {
@@ -1502,11 +1517,23 @@ const getVulnabilityListSpecific = async(req,res) =>{
         
         const vulList = await reportModel
         .find(filter)
-        .select('vulnerabilityName');
+        .select('vulnerabilityName sevirty description path impact vulnerableParameter references recomendation proofOfConcept')
+        .lean(); 
+          const processedList = vulList.map((report) => {
+            if (Array.isArray(report.proofOfConcept)) {
+                report.proofOfConcept = report.proofOfConcept
+                .filter((item) => item.description?.trim() || item.proof?.trim())
+                .map((item) => ({
+                    ...item,
+                    proof: item.proof ? `${req.protocol}://${req.get('host')}${item.proof}` : "",
+                }));
+            }
+            return report;
+        });
 
         res.status(200).json({
             statusCode:200,
-            data:vulList,
+            data:processedList,
             message:"Data has been fetched Succesful"
         })
     } catch(error){
@@ -1724,6 +1751,36 @@ const updateTenderById = async (req, res) => {
   }
 };
 
+const deleteTrue = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const updated = await reportModel.findByIdAndUpdate(
+      id, 
+      { isDeleted: true },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(400).json({
+        statusCode:400,
+        message: `No report found with id: ${id}`,
+      });
+    }
+
+    res.status(200).json({
+      statusCode:200,
+      message: "Report has been deleted successfully",
+    });
+  } catch (error) {
+    res.status(400).json({
+        statusCode:400,
+        message: "Server Error",
+        error: error.message,
+    });
+  }
+};
+
 
 module.exports = {
     perseonalDetails,
@@ -1766,5 +1823,6 @@ module.exports = {
     getState,
     getEmpListTaskForce,
     updateTenderById,
-    getTenderById
+    getTenderById,
+    deleteTrue,
 }
