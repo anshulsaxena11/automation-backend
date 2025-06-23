@@ -908,7 +908,7 @@ const updateReportById = async (req, res) => {
 
 const getRound = async (req, res) => {
     try {
-        const { projectName, projectType } = req.query; // Extract query parameters
+        const { projectName, projectType, devices='null' } = req.query; 
 
         if (!projectName || !projectType) {
             return res.status(400).json({
@@ -918,12 +918,12 @@ const getRound = async (req, res) => {
         }
 
         const rounds = await reportModel
-            .find({ projectName, projectType })
+            .find({ projectName, projectType, devices })
             .select("round");
 
-        // Convert rounds to numbers, remove duplicates, and sort in ascending order
+       
         const roundList = [...new Set(rounds.map(item => Number(item.round)))]
-            .filter(num => !isNaN(num)) // Ensure only valid numbers
+            .filter(num => !isNaN(num)) 
             .sort((a, b) => a - b);
 
         return res.status(200).json({
@@ -944,15 +944,15 @@ const getRound = async (req, res) => {
 
 const getFullReport = async (req, res) => {
     try {
-        const { projectName, projectType, round } = req.query;
+        const { projectName, projectType, round, devices='null' } = req.query;
 
-        // Fetch full report
-        const fullReport = await reportModel.find({ projectName, projectType, round });
 
-        // Fetch project details
+        const fullReport = await reportModel.find({ projectName, projectType, round, devices });
+
+
         const projectDetails = await projectdetailsModel.find({ _id: projectName });
 
-        // Ensure fullReport exists and has proofOfConcept
+
         const updatedReports = fullReport.map((report) => {
             if (Array.isArray(report.proofOfConcept)) {
                 report.proofOfConcept = report.proofOfConcept
@@ -1781,6 +1781,45 @@ const deleteTrue = async (req, res) => {
   }
 };
 
+const getNetworkDeviceList = async(req,res)=>{
+    try{
+        const { projectName, projectType } = req.query; 
+
+        if (!projectName || !projectType) {
+            return res.status(400).json({
+                statusCode: 400,
+                message: "Missing projectName or projectType",
+            });
+        }
+
+        const reports  = await reportModel
+            .find({ projectName, projectType })
+            .select("devices")
+            .lean();
+
+        const allDevices = reports.flatMap(report =>
+            Array.isArray(report.devices)
+                ? report.devices
+                : report.devices ? [report.devices] : []
+            );
+
+            const uniqueDevices = [...new Set(allDevices)];
+
+
+        res.status(200).json({
+            statusCode:200,
+            data:uniqueDevices,
+            message:'Devices has been fetched '
+        })
+    }catch(error){
+        res.status(400).json({
+            statusCode:400,
+            message:error
+        })
+    }
+
+}
+
 
 module.exports = {
     perseonalDetails,
@@ -1825,4 +1864,5 @@ module.exports = {
     updateTenderById,
     getTenderById,
     deleteTrue,
+    getNetworkDeviceList
 }
