@@ -1519,6 +1519,28 @@ const getVulnabilityListSpecific = async(req,res) =>{
 
 }
 
+
+const checkTenderName = async (req, res) => {
+  try {
+    const { tenderName } = req.query;
+    // Check in DB
+    const existingTender = await TenderTrackingModel.findOne({ tenderName: tenderName });
+
+    if (existingTender) {
+      return res.json({ exists: true });
+    } else {
+      return res.json({ exists: false });
+    }
+
+  } catch (error) {
+    console.error('Error in checkTenderName:', error);
+    return res.status(500).json({
+      message: 'Internal server error',
+      exists: false,
+    });
+  }
+};
+
 //Tender Detail
 const TenderTrackingDetails = async (req, res) => {
   try {
@@ -1573,43 +1595,51 @@ const TenderTrackingDetails = async (req, res) => {
   }
 };
 
-// getting projrct List API
+// getting project List API
 const getTenderDetails = async (req, res) => {
-    try {
-      const { page = 1, limit = 10, search = "" } = req.query;
-      const query = search
-        ? {
-            $or: [
-                { tenderName: { $regex: search, $options: "i" } },
-                { organizationName: { $regex: search, $options: "i" } },
-                { taskForce: { $regex: search, $options: "i" } },  // Example for searching by projectName
-            ]
-          }
-        : {};
-      const totalCount = await TenderTrackingModel.countDocuments(query);
-      const projects = await TenderTrackingModel.find(query)
-        .skip((page - 1) * limit)
-        .limit(parseInt(limit))
-        .sort({ createdAt: -1 });
+  try {
+    const { page = 1, limit = 10, search = "", isDeleted = "false" } = req.query;
 
-      res.status(200).json({
-        statuscode: 200,
-        success: true,
-        total: totalCount,
-        page: parseInt(page),
-        limit: parseInt(limit),
-        totalPages: Math.ceil(totalCount / limit),
-        data: projects,
-      });
-    } catch (error) {
-      res.status(400).json({
-        statusCode: 400,
-        success: false,
-        message: "Server Error",
-        error,
+    // Convert isDeleted string to boolean
+    const isDeletedBool = isDeleted === "false";
+
+    // Build query
+    const query = { 
+      isDeleted: isDeletedBool,
+      ...(search && {
+        $or: [
+          { tenderName: { $regex: search, $options: "i" } },
+          { organizationName: { $regex: search, $options: "i" } },
+          { taskForce: { $regex: search, $options: "i" } },
+        ]
+      })
+    };
+
+    const totalCount = await TenderTrackingModel.countDocuments(query);
+    const projects = await TenderTrackingModel.find(query)
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit))
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      statuscode: 200,
+      success: true,
+      total: totalCount,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      totalPages: Math.ceil(totalCount / limit),
+      data: projects,
     });
-    }
+  } catch (error) {
+    res.status(400).json({
+      statusCode: 400,
+      success: false,
+      message: "Server Error",
+      error,
+    });
+  }
 };
+
 
 const getState = async(req,res)=>{
     try{
@@ -1690,7 +1720,6 @@ const updateTenderById = async (req, res) => {
     const { id } = req.params;
     const updateData = req.body;
     const file = req.filesPath?.tenderDocument?.[0]; 
-
     const tender = await TenderTrackingModel.findById(id);
     if (!tender) {
       return res.status(404).json({
@@ -1704,7 +1733,7 @@ const updateTenderById = async (req, res) => {
     } else {
       updateData.tenderDocument = tender.tenderDocument;
     }
-
+    updateData.StatusChangeDate = new Date(); 
     const updatedTender = await TenderTrackingModel.findByIdAndUpdate(id, updateData, {
       new: true,
     });
@@ -1723,6 +1752,34 @@ const updateTenderById = async (req, res) => {
     });
   }
 };
+
+const deleteTenderById = async(req,res) =>{
+
+    try {
+    const { id } = req.params;
+
+    const deletedUser = await TenderTrackingModel.findByIdAndUpdate(
+      id,
+      { isDeleted: true, deletedAt: new Date(), },
+      { new: true },
+      
+    );
+
+    if (!deletedUser) {
+      return res.status(404).json({ message: 'Tender not found' });
+    }
+
+    return res.json({
+      message: 'Tender deleted successfully',
+      data: deletedUser ,
+    });
+
+  } catch (error) {
+    console.error('Tender delete error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
 
 
 module.exports = {
@@ -1762,9 +1819,11 @@ module.exports = {
     getTypeOfWork,
     getVulnabilityListSpecific,
     getTenderDetails,
+    checkTenderName,
     TenderTrackingDetails,
     getState,
     getEmpListTaskForce,
     updateTenderById,
+    deleteTenderById,
     getTenderById
 }

@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const TenderTrackingSchema = new mongoose.Schema({
-    tenderName:String,
+    tenderName:{ type: String, unique: true },
     organizationName:String,
     state:String,
     taskForce:String,
@@ -9,10 +9,16 @@ const TenderTrackingSchema = new mongoose.Schema({
     status:String,
     tenderDocument:String,
     lastDate:{type:Date, default:null},
+    StatusChangeDate:{type:Date, default:null},
     createdAt:{
         type: Date,
         default: Date.now,
-    }
+    },
+    isDeleted: { type: Boolean, default: false },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
 });
 
 const TenderTrackings = mongoose.model('TenderTracking', TenderTrackingSchema);
