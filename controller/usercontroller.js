@@ -27,7 +27,7 @@ const TenderTrackingModel = require("../models/tenderTrackingModel")
 const StateModel = require('../models/stateModel');
 const path = require('path');
 const sharp = require('sharp');
-
+const {sendEmail} = require('../services/email');
 const mongoose = require("mongoose");
 
 //Project Details API
@@ -1583,6 +1583,12 @@ const TenderTrackingDetails = async (req, res) => {
 
     const newTenderDetails = new TenderTrackingModel(tenderDetail);
     await newTenderDetails.save();
+
+     await sendEmail( 
+      "New Tender Created",
+      `A new tender has been created with title`,
+      `New Tender Created`
+    );
 
     return res.status(200).json({
       statusCode: 200,
