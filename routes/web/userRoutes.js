@@ -21,6 +21,7 @@ routes.put('/toolsandHardwareMaster/:id',UserCtrl.editToolsAndData)
 routes.put('/toolsAndHardware/:id',UserCtrl.editToolsAndHardware)
 routes.put('/timeline/:id',UserCtrl.timelinePhase)
 routes.put('/tenderTracking/:id',upload.single('tenderDocument'),UserCtrl.updateTenderById)
+routes.put('/reportDeleted/:id',UserCtrl.deleteTrue)
 //get
 routes.get('/deviceList',UserCtrl.getdeviceList)
 routes.get('/ProjectTypeList',UserCtrl.getProjectTypeList)
