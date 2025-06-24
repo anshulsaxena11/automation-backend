@@ -1808,6 +1808,74 @@ const deleteTenderById = async(req,res) =>{
   }
 };
 
+const deleteTrue = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const updated = await reportModel.findByIdAndUpdate(
+      id, 
+      { isDeleted: true },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(400).json({
+        statusCode:400,
+        message: `No report found with id: ${id}`,
+      });
+    }
+
+    res.status(200).json({
+      statusCode:200,
+      message: "Report has been deleted successfully",
+    });
+  } catch (error) {
+    res.status(400).json({
+        statusCode:400,
+        message: "Server Error",
+        error: error.message,
+    });
+  }
+};
+const getNetworkDeviceList = async(req,res)=>{
+    try{
+        const { projectName, projectType } = req.query; 
+
+        if (!projectName || !projectType) {
+            return res.status(400).json({
+                statusCode: 400,
+                message: "Missing projectName or projectType",
+            });
+        }
+
+        const reports  = await reportModel
+            .find({ projectName, projectType })
+            .select("devices")
+            .lean();
+
+        const allDevices = reports.flatMap(report =>
+            Array.isArray(report.devices)
+                ? report.devices
+                : report.devices ? [report.devices] : []
+            );
+
+            const uniqueDevices = [...new Set(allDevices)];
+
+
+        res.status(200).json({
+            statusCode:200,
+            data:uniqueDevices,
+            message:'Devices has been fetched '
+        })
+    }catch(error){
+        res.status(400).json({
+            statusCode:400,
+            message:error
+        })
+    }
+
+}
+
 
 module.exports = {
     perseonalDetails,
@@ -1853,4 +1921,6 @@ module.exports = {
     getTenderById,
     checkTenderName,
     deleteTenderById,
+    deleteTrue,
+    getNetworkDeviceList
 }
