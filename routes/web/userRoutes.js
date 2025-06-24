@@ -21,7 +21,6 @@ routes.put('/toolsandHardwareMaster/:id',UserCtrl.editToolsAndData)
 routes.put('/toolsAndHardware/:id',UserCtrl.editToolsAndHardware)
 routes.put('/timeline/:id',UserCtrl.timelinePhase)
 routes.put('/tenderTracking/:id',upload.single('tenderDocument'),UserCtrl.updateTenderById)
-routes.put('/reportDeleted/:id',UserCtrl.deleteTrue)
 //get
 routes.get('/deviceList',UserCtrl.getdeviceList)
 routes.get('/ProjectTypeList',UserCtrl.getProjectTypeList)
@@ -31,7 +30,6 @@ routes.get('/projectDetails',UserCtrl.getProjecDetails)
 routes.get('/report',UserCtrl.getReportDetails);
 routes.get('/vulnerability',UserCtrl.getVulnerability);
 routes.get('/round',UserCtrl.getRound)
-routes.get('/devices-list',UserCtrl.getNetworkDeviceList)
 routes.get('/fullreport',UserCtrl.getFullReport)
 routes.get('/roundList',UserCtrl.getAllRound)
 routes.get('/stpiEmp',UserCtrl.getStpiEmpListActive)
@@ -50,5 +48,7 @@ routes.get('/report/:id',UserCtrl.getReportDetailsById)
 routes.get('/timeline/:id',UserCtrl.timeline)
 routes.get('/tenderTracking/:id',UserCtrl.getTenderById)
 routes.put('/tenderTracking/:id',upload.single('tenderDocument'),UserCtrl.updateTenderById)
+routes.get('/checkTenderName/', UserCtrl.checkTenderName);
+routes.put('/soft-delete/:id',UserCtrl.deleteTenderById);
 
 module.exports = routes 

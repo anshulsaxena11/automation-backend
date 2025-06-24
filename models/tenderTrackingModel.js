@@ -21,6 +21,4 @@ const TenderTrackingSchema = new mongoose.Schema({
     },
 });
 
-const TenderTrackings = mongoose.model('TenderTracking', TenderTrackingSchema);
-
-module.exports = TenderTrackings;
+module.exports = mongoose.model('TenderTracking', TenderTrackingSchema);

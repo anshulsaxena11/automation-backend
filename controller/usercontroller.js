@@ -1546,28 +1546,6 @@ const getVulnabilityListSpecific = async(req,res) =>{
 
 }
 
-
-const checkTenderName = async (req, res) => {
-  try {
-    const { tenderName } = req.query;
-    // Check in DB
-    const existingTender = await TenderTrackingModel.findOne({ tenderName: tenderName });
-
-    if (existingTender) {
-      return res.json({ exists: true });
-    } else {
-      return res.json({ exists: false });
-    }
-
-  } catch (error) {
-    console.error('Error in checkTenderName:', error);
-    return res.status(500).json({
-      message: 'Internal server error',
-      exists: false,
-    });
-  }
-};
-
 //Tender Detail
 const TenderTrackingDetails = async (req, res) => {
   try {
@@ -1622,7 +1600,7 @@ const TenderTrackingDetails = async (req, res) => {
   }
 };
 
-// getting project List API
+// getting Tender List API
 const getTenderDetails = async (req, res) => {
   try {
     const { page = 1, limit = 10, search = "", isDeleted = "false" } = req.query;
@@ -1656,6 +1634,7 @@ const getTenderDetails = async (req, res) => {
       limit: parseInt(limit),
       totalPages: Math.ceil(totalCount / limit),
       data: projects,
+
     });
   } catch (error) {
     res.status(400).json({
@@ -1666,6 +1645,7 @@ const getTenderDetails = async (req, res) => {
     });
   }
 };
+
 
 
 const getState = async(req,res)=>{
@@ -1780,6 +1760,54 @@ const updateTenderById = async (req, res) => {
   }
 };
 
+const checkTenderName = async (req, res) => {
+  try {
+    const { tenderName } = req.query;
+    // Check in DB
+    console.log(tenderName);
+    const existingTender = await TenderTrackingModel.findOne({ tenderName: tenderName });
+console.log('qdwdqd');
+    if (existingTender) {
+      return res.json({ exists: true });
+    } else {
+      return res.json({ exists: false });
+    }
+
+  } catch (error) {
+    console.error('Error in checkTenderName:', error);
+    return res.status(500).json({
+      message: 'Internal server error',
+      exists: false,
+    });
+  }
+};
+const deleteTenderById = async(req,res) =>{
+
+    try {
+    const { id } = req.params;
+
+    const deletedUser = await TenderTrackingModel.findByIdAndUpdate(
+      id,
+      { isDeleted: true, deletedAt: new Date(), },
+      { new: true },
+      
+    );
+
+    if (!deletedUser) {
+      return res.status(404).json({ message: 'Tender not found' });
+    }
+
+    return res.json({
+      message: 'Tender deleted successfully',
+      data: deletedUser ,
+    });
+
+  } catch (error) {
+    console.error('Tender delete error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
 
 module.exports = {
     perseonalDetails,
@@ -1818,10 +1846,11 @@ module.exports = {
     getTypeOfWork,
     getVulnabilityListSpecific,
     getTenderDetails,
-    checkTenderName,
     TenderTrackingDetails,
     getState,
     getEmpListTaskForce,
     updateTenderById,
-    getTenderById
+    getTenderById,
+    checkTenderName,
+    deleteTenderById,
 }
