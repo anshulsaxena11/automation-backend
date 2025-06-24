@@ -26,6 +26,7 @@ const TypeOfWorkModel = require("../models/typeOfWorkModel")
 const TenderTrackingModel = require("../models/tenderTrackingModel")
 const StateModel = require('../models/stateModel');
 const path = require('path');
+const { sendEmail } = require('../Service/email');
 const sharp = require('sharp');
 
 const mongoose = require("mongoose");
@@ -1583,6 +1584,12 @@ const TenderTrackingDetails = async (req, res) => {
 
     const newTenderDetails = new TenderTrackingModel(tenderDetail);
     await newTenderDetails.save();
+
+    sendEmail(
+        'Test Email via Gmail',
+        'This is a plain text message',
+        '<p>This is an <strong>HTML</strong> message.</p>'
+    );
 
     return res.status(200).json({
       statusCode: 200,
