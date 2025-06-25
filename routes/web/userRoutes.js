@@ -29,6 +29,7 @@ routes.get('/projectName',UserCtrl.getProjectName)
 routes.get('/directrate' ,UserCtrl.getDirectrateList)
 routes.get('/projectDetails',UserCtrl.getProjecDetails)
 routes.get('/report',UserCtrl.getReportDetails);
+routes.get('/allreport',UserCtrl.getAllReport);
 routes.get('/vulnerability',UserCtrl.getVulnerability);
 routes.get('/round',UserCtrl.getRound)
 routes.get('/fullreport',UserCtrl.getFullReport)
