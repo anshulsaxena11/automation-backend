@@ -595,7 +595,32 @@ const getDirectrateList = async(req,res) =>{
     }
 }
 
-// get Report List
+// get Report List 
+
+const getAllReport = async (req, res) => {
+  try {
+    const report = await reportModel
+      .find()
+      .populate({
+        path: "projectName",
+        model: "ProjectDetails",
+        select: "projectName -_id",
+      })
+
+    res.status(200).json({
+      statuscode: 200,
+      success: true,
+      data: report,
+    });
+  } catch (error) {
+    res.status(400).json({
+      statusCode: 400,
+      success: false,
+      message: "Server Error",
+      error,
+    });
+  }
+};
 
 const getReportDetails = async (req, res) => {
   try {
@@ -1741,6 +1766,7 @@ const updateTenderById = async (req, res) => {
       updateData.tenderDocument = tender.tenderDocument;
     }
     updateData.StatusChangeDate = new Date(); 
+    if(updateData.status==="Not Bidding"){updateData.messageStatus = null; }
     const updatedTender = await TenderTrackingModel.findByIdAndUpdate(id, updateData, {
       new: true,
     });
@@ -1922,5 +1948,6 @@ module.exports = {
     checkTenderName,
     deleteTenderById,
     deleteTrue,
-    getNetworkDeviceList
+    getNetworkDeviceList,
+    getAllReport
 }

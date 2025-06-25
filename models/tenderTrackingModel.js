@@ -7,7 +7,9 @@ const TenderTrackingSchema = new mongoose.Schema({
     taskForce:String,
     valueINR:String,
     status:String,
-    tenderDocument:String,
+    message:String,
+    messageStatus:String,
+    tenderDocument:String,    
     lastDate:{type:Date, default:null},
     StatusChangeDate:{type:Date, default:null},
     createdAt:{
