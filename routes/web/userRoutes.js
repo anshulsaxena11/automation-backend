@@ -43,6 +43,7 @@ routes.post('/TenderTrackingDetails',upload.single('file'),UserCtrl.TenderTracki
 routes.get('/Tender',UserCtrl.getTenderDetails)
 routes.get('/state',UserCtrl.getState)
 routes.get('/EmpListTF',UserCtrl.getEmpListTaskForce)
+routes.get('/devices-list',UserCtrl.getNetworkDeviceList)
 //get by id
 routes.get('/project/:id',UserCtrl.getProjectTypeById)
 routes.get('/projectDetails/:id',UserCtrl.getProjecDetailsById)
